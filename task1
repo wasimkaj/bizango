@@ -1,0 +1,98 @@
+task 2
+
+---
+- hosts: localhost
+  vars:
+    - bizango_password: 'aaaabbb123'
+      aws_access_key: <provide i/p>
+      aws_secret_key: <provide i/p>
+      vpc_id: <provide i/p>
+      region: <provide i/p>
+      state: <provide i/p>
+      security_group_name: <provide i/p>
+      port10022CidrBlock: <provide i/p>
+  gather_facts: no
+  remote_user: centos
+  become: true
+  
+  tasks:
+  - name: Add a new user named bizango
+    user:
+      name: bizango
+      shell: /bin/bash
+      password: "{{ bizango_password }}"
+   
+   - name: Add bizango user to the sudoers
+     copy:
+       dest: "/etc/sudoers.d/bizango"
+       content: "bizango  ALL=(ALL)  NOPASSWD: ALL"
+   
+   - name: Deploy SSH Key
+     authorized_key: 
+       user=bizango
+       key="{{ lookup('file', '/home/bizango/.ssh/id_rsa.pub') }}"
+       state=present
+   
+   - name: Disable Password Authentication
+     lineinfile:
+       dest=/etc/ssh/sshd_config
+       regexp='^PasswordAuthentication'
+       line="PasswordAuthentication no"
+       state=present
+       backup=yes
+
+    - name: Disable Root Login
+      lineinfile:
+        dest=/etc/ssh/sshd_config
+        regexp='^PermitRootLogin'
+        line="PermitRootLogin no"
+        state=present
+        backup=yes
+     notify:
+       - restart sshd
+       
+       
+    - name: Setup alternate SSH port
+      lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "^Port"
+        line: "Port 10022"
+      notify: 
+        - restart sshd
+
+    - name: Setup selinux for alternate SSH port
+      seport:
+      ports: "10022"
+      proto: "tcp"
+      setype: "ssh_port_t"
+      state: "present" 
+      
+    - name: logout all users idle for 10 mins
+      lineinfile:
+        dest: "/etc/profile"
+        line: "TMOUT 600"
+        
+    - name: create ec2 security group
+      ec2_group:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      vpc_id: "{{ ec2_vpc_net_result.vpc.id }}"
+      region: "{{ region }}"
+      state: "{{ state }}"
+      name: "{{ security_group_name }}"
+      description: "{{ security_group_name }}"
+      tags:
+        Name: "{{ security_group_name  }}"
+      rules:
+      - proto: tcp
+        ports:
+        - 10022
+        cidr_ip: "{{ port10022CidrBlock }}"
+        rule_desc: allow all on port 10022
+    register: security_group_results
+
+  handlers:
+  - name: restart sshd
+    service:
+      name=sshd
+      state=restarted
