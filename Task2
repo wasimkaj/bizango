@@ -1,17 +1,12 @@
 task 2
-
+(*) local host public IP: 1.1.1.1/32
 ---
-- hosts: localhost
+- hosts: awsec2
   vars:
     - bizango_password: 'aaaabbb123'
-      aws_access_key: <provide i/p>
-      aws_secret_key: <provide i/p>
-      vpc_id: <provide i/p>
-      region: <provide i/p>
-      state: <provide i/p>
-      security_group_name: <provide i/p>
-      port10022CidrBlock: <provide i/p>
-  gather_facts: no
+    ip_addresses: 
+      - 1.1.1.1/32
+  gather_facts: False
   remote_user: centos
   become: true
   
@@ -22,10 +17,10 @@ task 2
       shell: /bin/bash
       password: "{{ bizango_password }}"
    
-   - name: Add bizango user to the sudoers
-     copy:
-       dest: "/etc/sudoers.d/bizango"
-       content: "bizango  ALL=(ALL)  NOPASSWD: ALL"
+  - name: Add bizango user to the sudoers
+    copy:
+      dest: "/etc/sudoers.d/bizango"
+      content: "bizango  ALL=(ALL)  NOPASSWD: ALL"
    
    - name: Deploy SSH Key
      authorized_key: 
@@ -62,37 +57,36 @@ task 2
 
     - name: Setup selinux for alternate SSH port
       seport:
-      ports: "10022"
-      proto: "tcp"
-      setype: "ssh_port_t"
-      state: "present" 
+        ports: "10022"
+        proto: "tcp"
+        setype: "ssh_port_t"
+        state: "present" 
       
     - name: logout all users idle for 10 mins
       lineinfile:
         dest: "/etc/profile"
         line: "TMOUT 600"
         
-    - name: create ec2 security group
+    - name: add rule in ec2 security group
       ec2_group:
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      vpc_id: "{{ ec2_vpc_net_result.vpc.id }}"
-      region: "{{ region }}"
-      state: "{{ state }}"
-      name: "{{ security_group_name }}"
-      description: "{{ security_group_name }}"
-      tags:
-        Name: "{{ security_group_name  }}"
-      rules:
-      - proto: tcp
-        ports:
-        - 10022
-        cidr_ip: "{{ port10022CidrBlock }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        vpc_id: "{{ ec2_vpc_net_result.vpc.id }}"
+        region: "{{ region }}"
+        profile: ""{{ profile-name }}"
+        name: "{{ security_group_name }}"
+        description: "{{ security_group_name }}"
+        purge_rules: true
+        rules:
+          - proto: tcp
+            from_port: <some port>
+            to_port: 10022
+            cidr_ip: "{{ ip_addresses }}"
         rule_desc: allow all on port 10022
-    register: security_group_results
+        register: security_group_results
 
   handlers:
-  - name: restart sshd
-    service:
-      name=sshd
-      state=restarted
+    - name: restart sshd
+      service:
+        name=sshd
+        state=restarted
