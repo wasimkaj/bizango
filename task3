@@ -4,7 +4,7 @@ from boto import ec2
 connection=ec2.connect_to_region("REGION-NAME")
 sg=connection.get_all_security_groups()
  
-final=""
+final_Instances=""
 
 def getTag(instanceId):
     all=connection.get_all_instances(filters={'instance_id':instanceId})
@@ -15,8 +15,8 @@ def getTag(instanceId):
     for securityGroup in sg:
         for rule in securityGroup.rules:
             global instanceId;
-            if (rule.from_port=='22' and rule.to_port == '22') and '0.0.0.0/0' in str(rule.grants):
+            if '0.0.0.0/0' in str(rule.grants):
                 for instanceid in securityGroup.instances():
                     instanceId=str(instanceid)
-                    final += "Instance Name : " + getTag(instanceId.split(':')[1]) + "\t State:" + instanceid.state + "\t SecurityGroup:" +securityGroup.name + "\n"
-    print(' '.join(final))
+                    final_Instances += "Instance Name : " + getTag(instanceId.split(':')[1]) + "\t State:" + instanceid.state + "\t SecurityGroup:" +securityGroup.name + "\n"
+   
