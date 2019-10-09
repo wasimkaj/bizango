@@ -1,0 +1,37 @@
+# create an simpleweb directory , get into it
+
+package.json -- listing dependencies
+index.js --  server logic ; listening port is configured to 8500 ; variable 'visit-count' is configured in redis server config
+
+-----------
+node.js Dockerfile
+-----------
+FROM node:12.5.0 as builder
+WORKDIR /usr/app
+COPY ./ ./ -- copy all simpleweb dir contents
+RUN npm install
+CMD ["npm", "start"]
+
+FROM nginx:1.16.0
+COPY --from=builder /usr/app/build /usr/share/nginx
+
+#docker build -t bizongo/nodejs .
+#docker run -p 80:8500 bizongo/nodejs
+
+------------------
+docker-compose.yml
+------------------
+version: '3'
+services:
+  redis-server:
+    image: 'redis:5.0.4'
+  node-app:
+   build: .
+   ports:
+     - "80:8500"
+
+
+---------------------------------
+
+docker run -it --rm <image> /bin/bash -c 'node --version'
+docker ps -- check the version
