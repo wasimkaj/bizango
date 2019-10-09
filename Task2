@@ -3,7 +3,7 @@ task 2
 ---
 - hosts: awsec2
   vars:
-    - bizango_password: 'aaaabbb123'
+    - bizongo_password: 'aaaabbb123'
     ip_addresses: 
       - 1.1.1.1/32
   gather_facts: False
@@ -11,21 +11,21 @@ task 2
   become: true
   
   tasks:
-  - name: Add a new user named bizango
+  - name: Add a new user named bizongo
     user:
       name: bizango
       shell: /bin/bash
       password: "{{ bizango_password }}"
    
-  - name: Add bizango user to the sudoers
+  - name: Add bizongo user to the sudoers
     copy:
-      dest: "/etc/sudoers.d/bizango"
+      dest: "/etc/sudoers.d/bizongo"
       content: "bizango  ALL=(ALL)  NOPASSWD: ALL"
    
    - name: Deploy SSH Key
      authorized_key: 
-       user=bizango
-       key="{{ lookup('file', '/home/bizango/.ssh/id_rsa.pub') }}"
+       user=bizongo
+       key="{{ lookup('file', '/home/bizongo/.ssh/id_rsa.pub') }}"
        state=present
    
    - name: Disable Password Authentication
