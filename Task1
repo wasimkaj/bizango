@@ -32,6 +32,6 @@ services:
 
 
 ---------------------------------
-
+docker-compose up
 docker run -it --rm <image> /bin/bash -c 'node --version'
 docker ps -- check the version
