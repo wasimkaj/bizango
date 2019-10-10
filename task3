@@ -20,3 +20,4 @@ def getTag(instanceId):
                     instanceId=str(instanceid)
                     final_Instances += "Instance Name : " + getTag(instanceId.split(':')[1]) + "\t State:" + instanceid.state + "\t SecurityGroup:" +securityGroup.name + "\n"
    
+    return final_Instances
