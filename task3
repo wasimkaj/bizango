@@ -15,7 +15,7 @@ def getTag(instanceId):
     for securityGroup in sg:
         for rule in securityGroup.rules:
             global instanceId;
-            if '0.0.0.0/0' in str(rule.grants):
+            if (rule.from_port=='22' and rule.to_port == '22')  and '0.0.0.0/0' in str(rule.grants):
                 for instanceid in securityGroup.instances():
                     instanceId=str(instanceid)
                     final_Instances += "Instance Name : " + getTag(instanceId.split(':')[1]) + "\t State:" + instanceid.state + "\t SecurityGroup:" +securityGroup.name + "\n"
