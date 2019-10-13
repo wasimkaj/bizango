@@ -10,6 +10,7 @@ FROM node:12.5.0 as builder
 WORKDIR /usr/app
 COPY ./ ./ -- copy all simpleweb dir contents
 RUN npm install
+EXPOSE 8500
 CMD ["npm", "start"]
 
 FROM nginx:1.16.0
